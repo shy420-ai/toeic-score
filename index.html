@@ -167,7 +167,10 @@
     .clock input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
     .checkpoints { list-style: none; padding: 0; margin: 14px 0 0; }
     .checkpoints li { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; color: var(--ink-2); }
-    .checkpoints li b { font: 400 28px/1 var(--serif); color: var(--ink); font-variant-numeric: lining-nums tabular-nums; }
+    .checkpoints li { gap: 10px; white-space: nowrap; }
+    .checkpoints .cp-name { flex: 1 1 auto; }
+    .checkpoints .cp-add { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .checkpoints li b { min-width: 3.1em; text-align: right; font: 400 28px/1 var(--serif); color: var(--ink); font-variant-numeric: lining-nums tabular-nums; }
     .checkpoints li:last-child { border-bottom: 1px solid var(--ink); }
 
     /* note */
@@ -337,10 +340,10 @@
             <label for="lc-end">리스닝 끝난 시각을 넣으면 실제 시각으로 바꿔줘요</label>
             <input id="lc-end" type="time" step="60">
             <ol class="checkpoints" id="checkpoints" hidden>
-              <li><span>Part 7 끝</span><b id="cp-p7">—</b></li>
-              <li><span>Part 5 끝</span><b id="cp-p5">—</b></li>
-              <li><span>Part 6 끝</span><b id="cp-p6">—</b></li>
-              <li><span>마킹 마감</span><b id="cp-end">—</b></li>
+              <li><span class="cp-name">Part 7 끝</span><span class="cp-add" id="cp-add-p7"></span><b id="cp-p7">—</b></li>
+              <li><span class="cp-name">Part 5 끝</span><span class="cp-add" id="cp-add-p5"></span><b id="cp-p5">—</b></li>
+              <li><span class="cp-name">Part 6 끝</span><span class="cp-add" id="cp-add-p6"></span><b id="cp-p6">—</b></li>
+              <li><span class="cp-name">마킹 마감</span><span class="cp-add" id="cp-add-end"></span><b id="cp-end">—</b></li>
             </ol>
           </div>
         </div>
@@ -628,6 +631,10 @@
         byId("cp-p5").textContent = addMinutes(start, p7 + p5);
         byId("cp-p6").textContent = addMinutes(start, p7 + p5 + p6);
         byId("cp-end").textContent = addMinutes(start, 75);
+        byId("cp-add-p7").textContent = "+" + p7 + "분";
+        byId("cp-add-p5").textContent = "+" + p5 + "분";
+        byId("cp-add-p6").textContent = "+" + p6 + "분";
+        byId("cp-add-end").textContent = "+" + (75 - p7 - p5 - p6) + "분";
         list.hidden = false;
       } else list.hidden = true;
     }
