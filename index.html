@@ -147,6 +147,7 @@
     .runs input[aria-invalid="true"] { border-style: dashed; border-color: var(--ink); }
     .runs-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 10px; }
     .limit-line { font-size: 15px; color: var(--ink-2); margin-top: 4px; }
+    .limit-line span { white-space: nowrap; color: var(--ink); font-weight: 600; }
     .limit-nums { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 10px; border-top: 1px solid var(--line); }
     .limit-nums > div { padding-top: 10px; }
     .limit-nums > div + div { padding-left: 14px; border-left: 1px solid var(--line); }
@@ -159,6 +160,7 @@
     .limit-stats th:first-child, .limit-stats td:first-child { text-align: left; padding-left: 0; }
     .limit-stats thead th { font-size: 12px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--ink); }
     .swap { margin-top: 12px; font-size: 13px; color: var(--ink-2); }
+    .split-note { margin-top: 4px; font-size: 12px; }
     .clock { margin-top: 22px; border-top: 1px solid var(--ink); padding-top: 16px; }
     .clock label { display: block; font-size: 14px; font-weight: 600; color: var(--ink-2); margin-bottom: 8px; }
     .clock input { height: 50px; min-width: 150px; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: 600 22px/1 var(--sans); font-variant-numeric: tabular-nums; }
@@ -318,20 +320,21 @@
         </div>
         <div class="limit-out">
           <h2 class="eyebrow">내 리밋</h2>
-          <p class="limit-line" id="limit-line">내 리밋 Part 7 54분 · Part 5 8분 · Part 6 10분</p>
+          <p class="limit-line" id="limit-line">리스닝 끝나면 <span>Part 7 +54분</span> → <span>Part 5 +8분</span> → <span>Part 6 +10분</span></p>
           <dl class="limit-nums">
-            <div><dt>Part 7</dt><dd id="lim-p7">54<small>분</small></dd></div>
-            <div><dt>Part 5</dt><dd id="lim-p5">8<small>분</small></dd></div>
-            <div><dt>Part 6</dt><dd id="lim-p6">10<small>분</small></dd></div>
+            <div><dt>Part 7</dt><dd id="lim-p7">+54<small>분</small></dd></div>
+            <div><dt>Part 5</dt><dd id="lim-p5">+8<small>분</small></dd></div>
+            <div><dt>Part 6</dt><dd id="lim-p6">+10<small>분</small></dd></div>
           </dl>
-          <p class="limit-msg" id="limit-msg" role="status" aria-live="polite">기록이 없어서 기본 리밋(54 · 8 · 10분)을 보여줘요.</p>
+          <p class="limit-msg" id="limit-msg" role="status" aria-live="polite">기록이 없어서 기본 리밋 +54 → +8 → +10분을 보여줘요.</p>
           <table class="limit-stats" id="limit-stats" hidden>
             <thead><tr><th scope="col">파트</th><th scope="col">가장 빠름</th><th scope="col">가장 느림</th><th scope="col">평균</th></tr></thead>
             <tbody id="limit-stats-body"></tbody>
           </table>
           <p class="swap">Part 5·6 중 편한 쪽 시간을 줄여 어려운 쪽에 넘겨도 돼요.</p>
+          <p class="hint split-note">본문의 +30 / +24는 Part 7 안에서 2지문 시작 체크(+30)까지 나눈 거예요.</p>
           <div class="clock">
-            <label for="lc-end">리스닝 끝난 시각</label>
+            <label for="lc-end">리스닝 끝난 시각을 넣으면 실제 시각으로 바꿔줘요</label>
             <input id="lc-end" type="time" step="60">
             <ol class="checkpoints" id="checkpoints" hidden>
               <li><span>Part 7 끝</span><b id="cp-p7">—</b></li>
@@ -591,15 +594,16 @@
     function renderLimit() {
       const result = computeLimits(readRuns());
       const {p7, p5, p6} = result.limits;
-      const setNum = (id, v) => { const el = byId(id); el.textContent = v; const u = document.createElement("small"); u.textContent = "분"; el.append(u); };
+      const setNum = (id, v) => { const el = byId(id); el.textContent = "+" + v; const u = document.createElement("small"); u.textContent = "분"; el.append(u); };
       setNum("lim-p7", p7); setNum("lim-p5", p5); setNum("lim-p6", p6);
-      byId("limit-line").textContent = "내 리밋 Part 7 " + p7 + "분 · Part 5 " + p5 + "분 · Part 6 " + p6 + "분";
+      const step = (text) => { const el = document.createElement("span"); el.textContent = text; return el; };
+      byId("limit-line").replaceChildren("리스닝 끝나면 ", step("Part 7 +" + p7 + "분"), " → ", step("Part 5 +" + p5 + "분"), " → ", step("Part 6 +" + p6 + "분"));
       const msg = byId("limit-msg");
       const statsTable = byId("limit-stats");
       if (!result.ready) {
         const entered = ["p7", "p5", "p6"].some((key) => result.stats[key].n > 0);
-        msg.textContent = entered ? "파트마다 2회 이상 넣으면 내 리밋이 나와요. 지금은 기본 리밋(54 · 8 · 10분)이에요."
-          : "기록이 없어서 기본 리밋(54 · 8 · 10분)을 보여줘요.";
+        msg.textContent = entered ? "파트마다 2회 이상 넣으면 내 리밋이 나와요. 지금은 기본 리밋 +54 → +8 → +10분이에요."
+          : "기록이 없어서 기본 리밋 +54 → +8 → +10분을 보여줘요.";
         statsTable.hidden = true;
       } else {
         msg.textContent = result.scaled
