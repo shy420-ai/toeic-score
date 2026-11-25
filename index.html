@@ -126,6 +126,48 @@
     .checked { margin-top: 8px; font-size: 12px; color: var(--muted); }
     .disclaimer { margin-top: 18px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; line-height: 1.6; color: var(--ink-2); background: var(--surface); }
 
+    /* tabs */
+    .tabs { display: flex; gap: 0; margin-top: 18px; border-bottom: 1px solid var(--line); }
+    .tab { flex: 1 1 0; min-height: 46px; padding: 10px 4px; border: 0; background: none; font-size: 15px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+    @media (min-width: 760px) { .tab { flex: 0 0 auto; padding: 10px 22px 10px 0; text-align: left; } }
+
+    /* limit tool */
+    .limit { margin: 22px 0 28px; }
+    .limit-context { font-size: 14px; line-height: 1.7; color: var(--ink-2); }
+    .limit-grid { display: grid; grid-template-columns: 1fr; gap: 26px; margin-top: 18px; }
+    @media (min-width: 760px) { .limit-grid { grid-template-columns: 1.1fr 1fr; gap: 44px; } .limit-out { border-left: 1px solid var(--line); padding-left: 44px; } }
+    .runs { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    .runs th { font-size: 12px; font-weight: 600; color: var(--muted); text-align: left; padding: 0 4px 6px; border-bottom: 1px solid var(--ink); }
+    .runs th:first-child, .runs td:first-child { width: 44px; padding-left: 0; }
+    .runs td { padding: 4px; border-bottom: 1px solid var(--line-soft); font-size: 13px; color: var(--muted); }
+    .runs input { width: 100%; min-width: 0; height: 40px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: 600 16px/1 var(--sans); font-variant-numeric: tabular-nums; text-align: right; }
+    .runs input::placeholder { color: var(--faint); font-weight: 400; }
+    .runs input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+    .runs input[aria-invalid="true"] { border-style: dashed; border-color: var(--ink); }
+    .runs-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 10px; }
+    .limit-line { font-size: 15px; color: var(--ink-2); margin-top: 4px; }
+    .limit-nums { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 10px; border-top: 1px solid var(--line); }
+    .limit-nums > div { padding-top: 10px; }
+    .limit-nums > div + div { padding-left: 14px; border-left: 1px solid var(--line); }
+    .limit-nums dt { font-size: 13px; color: var(--muted); }
+    .limit-nums dd { font: 400 44px/1.05 var(--serif); font-variant-numeric: lining-nums tabular-nums; margin: 2px 0 0; }
+    .limit-nums dd small { font: 400 13px var(--sans); color: var(--muted); margin-left: 3px; }
+    .limit-msg { margin-top: 10px; font-size: 13px; color: var(--muted); min-height: 20px; }
+    .limit-stats { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .limit-stats th, .limit-stats td { padding: 6px 4px; border-bottom: 1px solid var(--line-soft); text-align: right; }
+    .limit-stats th:first-child, .limit-stats td:first-child { text-align: left; padding-left: 0; }
+    .limit-stats thead th { font-size: 12px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--ink); }
+    .swap { margin-top: 12px; font-size: 13px; color: var(--ink-2); }
+    .clock { margin-top: 22px; border-top: 1px solid var(--ink); padding-top: 16px; }
+    .clock label { display: block; font-size: 14px; font-weight: 600; color: var(--ink-2); margin-bottom: 8px; }
+    .clock input { height: 50px; min-width: 150px; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: 600 22px/1 var(--sans); font-variant-numeric: tabular-nums; }
+    .clock input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+    .checkpoints { list-style: none; padding: 0; margin: 14px 0 0; }
+    .checkpoints li { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; color: var(--ink-2); }
+    .checkpoints li b { font: 400 28px/1 var(--serif); color: var(--ink); font-variant-numeric: lining-nums tabular-nums; }
+    .checkpoints li:last-child { border-bottom: 1px solid var(--ink); }
+
     /* note */
     .note { border-top: 1px solid var(--ink); padding: 18px 0 20px; }
     .note h2 { margin-bottom: 10px; }
@@ -168,7 +210,12 @@
       <div><p class="context">TOEIC Listening &amp; Reading</p><h1>토익 점수 추정기</h1></div>
       <div class="marks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </header>
+    <div class="tabs" role="tablist" aria-label="도구 고르기">
+      <button class="tab" role="tab" id="tab-btn-score" aria-controls="tab-score" aria-selected="true" type="button">점수 추정</button>
+      <button class="tab" role="tab" id="tab-btn-limit" aria-controls="tab-limit" aria-selected="false" type="button" tabindex="-1">내 리밋 계산</button>
+    </div>
     <noscript>계산하려면 자바스크립트를 켠 브라우저에서 열어 주세요.</noscript>
+    <div id="tab-score" role="tabpanel" aria-labelledby="tab-btn-score">
     <div class="workspace">
       <section class="entry" aria-labelledby="entry-title">
         <div class="toolbar">
@@ -254,7 +301,49 @@
         </span></p>
       </div>
     </details>
-    <p class="foot">서버 없이 이 페이지 안에서만 계산해요. 입력한 숫자는 어디에도 저장되거나 보내지지 않아요.</p>
+    </div>
+    <section id="tab-limit" class="limit" role="tabpanel" aria-labelledby="tab-btn-limit" hidden>
+      <p class="limit-context">리딩은 Part 7 → 5 → 6 순서로 풀어요.<br>리스닝 끝나고 75분 중 마킹 3분 남기면 72분이에요.</p>
+      <div class="limit-grid">
+        <div>
+          <h2>실전 회차별 걸린 시간 <small class="hint">(분)</small></h2>
+          <table class="runs" aria-describedby="runs-hint">
+            <thead><tr><th scope="col">회차</th><th scope="col">Part 7</th><th scope="col">Part 5</th><th scope="col">Part 6</th></tr></thead>
+            <tbody id="runs-body"></tbody>
+          </table>
+          <div class="runs-foot">
+            <p class="hint" id="runs-hint">빈 줄은 두어도 돼요. 파트마다 2회 이상 있으면 계산해요.</p>
+            <button class="flat" type="button" id="runs-clear">기록 지우기</button>
+          </div>
+        </div>
+        <div class="limit-out">
+          <h2 class="eyebrow">내 리밋</h2>
+          <p class="limit-line" id="limit-line">내 리밋 Part 7 54분 · Part 5 8분 · Part 6 10분</p>
+          <dl class="limit-nums">
+            <div><dt>Part 7</dt><dd id="lim-p7">54<small>분</small></dd></div>
+            <div><dt>Part 5</dt><dd id="lim-p5">8<small>분</small></dd></div>
+            <div><dt>Part 6</dt><dd id="lim-p6">10<small>분</small></dd></div>
+          </dl>
+          <p class="limit-msg" id="limit-msg" role="status" aria-live="polite">기록이 없어서 기본 리밋(54 · 8 · 10분)을 보여줘요.</p>
+          <table class="limit-stats" id="limit-stats" hidden>
+            <thead><tr><th scope="col">파트</th><th scope="col">가장 빠름</th><th scope="col">가장 느림</th><th scope="col">평균</th></tr></thead>
+            <tbody id="limit-stats-body"></tbody>
+          </table>
+          <p class="swap">Part 5·6 중 편한 쪽 시간을 줄여 어려운 쪽에 넘겨도 돼요.</p>
+          <div class="clock">
+            <label for="lc-end">리스닝 끝난 시각</label>
+            <input id="lc-end" type="time" step="60">
+            <ol class="checkpoints" id="checkpoints" hidden>
+              <li><span>Part 7 끝</span><b id="cp-p7">—</b></li>
+              <li><span>Part 5 끝</span><b id="cp-p5">—</b></li>
+              <li><span>Part 6 끝</span><b id="cp-p6">—</b></li>
+              <li><span>마킹 마감</span><b id="cp-end">—</b></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+    <p class="foot">서버 없이 이 페이지 안에서만 계산해요. 입력한 숫자는 어디로도 보내지지 않고, 리밋 기록만 이 브라우저에 남아요.</p>
   </main>
   <script>
     "use strict";
@@ -409,6 +498,164 @@
       byId("lc").focus();
     });
     renderScores();
+
+    // ---- 내 리밋 계산 ----
+    // LIMIT-CALC-START
+    const LIMIT_TOTAL = 72;
+    const LIMIT_DEFAULT = {p7: 54, p5: 8, p6: 10};
+    function computeLimits(rows) {
+      const keys = ["p7", "p5", "p6"];
+      const stats = {};
+      for (const key of keys) {
+        const values = rows.map((row) => row[key]).filter((v) => typeof v === "number" && v > 0);
+        stats[key] = values.length ? {n: values.length, min: Math.min(...values), max: Math.max(...values)} : {n: 0};
+        if (values.length) stats[key].avg = (stats[key].min + stats[key].max) / 2;
+      }
+      if (keys.some((key) => stats[key].n < 2)) return {ready: false, stats, limits: {...LIMIT_DEFAULT}};
+      const raw = keys.map((key) => stats[key].avg);
+      const sum = raw.reduce((a, b) => a + b, 0);
+      // whole minutes that add up to exactly `target` (largest remainder)
+      const fit = (exact, target) => {
+        const floor = exact.map(Math.floor);
+        let left = target - floor.reduce((a, b) => a + b, 0);
+        const order = exact.map((v, i) => [v - floor[i], i]).sort((a, b) => b[0] - a[0]);
+        for (const [, i] of order) { if (left <= 0) break; floor[i]++; left--; }
+        return floor;
+      };
+      const scaled = sum > LIMIT_TOTAL;
+      let limits = scaled ? fit(raw.map((v) => v * LIMIT_TOTAL / sum), LIMIT_TOTAL) : raw.map((v) => Math.round(v));
+      if (!scaled && limits.reduce((a, b) => a + b, 0) > LIMIT_TOTAL) limits = fit(raw, LIMIT_TOTAL);
+      const total = limits.reduce((a, b) => a + b, 0);
+      return {ready: true, stats, rawSum: sum, scaled, spare: Math.max(0, LIMIT_TOTAL - total),
+        limits: {p7: limits[0], p5: limits[1], p6: limits[2]}};
+    }
+    function addMinutes(hhmm, minutes) {
+      const [h, m] = hhmm.split(":").map(Number);
+      const t = ((h * 60 + m + minutes) % 1440 + 1440) % 1440;
+      return String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0");
+    }
+    // LIMIT-CALC-END
+    const RUN_COUNT = 10;
+    const STORE_KEY = "toeic-limit-v1";
+    const fmtMin = (v) => (Math.round(v * 10) / 10).toString().replace(/\.0$/, "");
+    function buildRuns() {
+      const body = byId("runs-body");
+      for (let i = 0; i < RUN_COUNT; i++) {
+        const tr = document.createElement("tr");
+        const th = document.createElement("td");
+        th.textContent = (i + 1) + "회";
+        tr.append(th);
+        for (const key of ["p7", "p5", "p6"]) {
+          const td = document.createElement("td");
+          const input = document.createElement("input");
+          input.type = "text"; input.inputMode = "decimal"; input.autocomplete = "off";
+          input.id = "run-" + i + "-" + key; input.placeholder = "—";
+          input.setAttribute("aria-label", (i + 1) + "회 Part " + key.slice(1) + " 걸린 시간(분)");
+          td.append(input); tr.append(td);
+        }
+        body.append(tr);
+      }
+    }
+    function readRuns() {
+      const rows = [];
+      for (let i = 0; i < RUN_COUNT; i++) {
+        const row = {};
+        for (const key of ["p7", "p5", "p6"]) {
+          const field = byId("run-" + i + "-" + key);
+          const raw = field.value.normalize("NFKC").trim();
+          const ok = raw === "" || (/^\d+(\.\d+)?$/.test(raw) && Number(raw) > 0 && Number(raw) <= 75);
+          field.setAttribute("aria-invalid", String(!ok));
+          if (raw !== "" && ok) row[key] = Number(raw);
+        }
+        rows.push(row);
+      }
+      return rows;
+    }
+    function saveLimit() {
+      try {
+        const runs = [];
+        for (let i = 0; i < RUN_COUNT; i++) runs.push(["p7", "p5", "p6"].map((key) => byId("run-" + i + "-" + key).value));
+        localStorage.setItem(STORE_KEY, JSON.stringify({runs, start: byId("lc-end").value}));
+      } catch (error) { /* storage unavailable: keep working without saving */ }
+    }
+    function loadLimit() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+        if (!saved) return;
+        (saved.runs || []).slice(0, RUN_COUNT).forEach((values, i) => ["p7", "p5", "p6"].forEach((key, k) => {
+          if (typeof values[k] === "string") byId("run-" + i + "-" + key).value = values[k];
+        }));
+        if (typeof saved.start === "string") byId("lc-end").value = saved.start;
+      } catch (error) { /* ignore broken or blocked storage */ }
+    }
+    function renderLimit() {
+      const result = computeLimits(readRuns());
+      const {p7, p5, p6} = result.limits;
+      const setNum = (id, v) => { const el = byId(id); el.textContent = v; const u = document.createElement("small"); u.textContent = "분"; el.append(u); };
+      setNum("lim-p7", p7); setNum("lim-p5", p5); setNum("lim-p6", p6);
+      byId("limit-line").textContent = "내 리밋 Part 7 " + p7 + "분 · Part 5 " + p5 + "분 · Part 6 " + p6 + "분";
+      const msg = byId("limit-msg");
+      const statsTable = byId("limit-stats");
+      if (!result.ready) {
+        const entered = ["p7", "p5", "p6"].some((key) => result.stats[key].n > 0);
+        msg.textContent = entered ? "파트마다 2회 이상 넣으면 내 리밋이 나와요. 지금은 기본 리밋(54 · 8 · 10분)이에요."
+          : "기록이 없어서 기본 리밋(54 · 8 · 10분)을 보여줘요.";
+        statsTable.hidden = true;
+      } else {
+        msg.textContent = result.scaled
+          ? "평균을 더하면 " + fmtMin(result.rawSum) + "분이라 72분에 맞게 비율대로 줄였어요."
+          : result.spare > 0 ? "72분 중 " + result.spare + "분이 남아요. 검토나 어려운 파트에 써요." : "딱 72분이에요.";
+        const body = byId("limit-stats-body");
+        body.replaceChildren();
+        for (const key of ["p7", "p5", "p6"]) {
+          const s = result.stats[key];
+          const tr = document.createElement("tr");
+          for (const text of ["Part " + key.slice(1), fmtMin(s.min) + "분", fmtMin(s.max) + "분", fmtMin(s.avg) + "분"]) {
+            const td = document.createElement("td"); td.textContent = text; tr.append(td);
+          }
+          body.append(tr);
+        }
+        statsTable.hidden = false;
+      }
+      const start = byId("lc-end").value;
+      const list = byId("checkpoints");
+      if (/^\d{2}:\d{2}/.test(start)) {
+        byId("cp-p7").textContent = addMinutes(start, p7);
+        byId("cp-p5").textContent = addMinutes(start, p7 + p5);
+        byId("cp-p6").textContent = addMinutes(start, p7 + p5 + p6);
+        byId("cp-end").textContent = addMinutes(start, 75);
+        list.hidden = false;
+      } else list.hidden = true;
+    }
+    buildRuns();
+    loadLimit();
+    byId("tab-limit").addEventListener("input", () => { renderLimit(); saveLimit(); });
+    byId("runs-clear").addEventListener("click", () => {
+      for (let i = 0; i < RUN_COUNT; i++) for (const key of ["p7", "p5", "p6"]) byId("run-" + i + "-" + key).value = "";
+      renderLimit(); saveLimit();
+    });
+    renderLimit();
+
+    // ---- tabs ----
+    const tabs = [["score", byId("tab-btn-score"), byId("tab-score")], ["limit", byId("tab-btn-limit"), byId("tab-limit")]];
+    function showTab(name, focus) {
+      for (const [key, button, panel] of tabs) {
+        const on = key === name;
+        button.setAttribute("aria-selected", String(on));
+        button.tabIndex = on ? 0 : -1;
+        panel.hidden = !on;
+        if (on && focus) button.focus();
+      }
+      const hash = name === "limit" ? "#limit" : "";
+      if (location.hash !== hash) history.replaceState(null, "", location.pathname + location.search + hash);
+    }
+    for (const [key, button] of tabs) {
+      button.addEventListener("click", () => showTab(key));
+      button.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); showTab(key === "score" ? "limit" : "score", true); }
+      });
+    }
+    showTab(location.hash === "#limit" ? "limit" : "score");
   </script>
 </body>
 </html>
