@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f6f4ef">
+  <meta name="description" content="토익 리스닝·리딩에서 틀린 개수를 넣으면 예상 점수를 알려 주는 추정기예요. 서버 없이 이 페이지 안에서만 계산해요.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23161616'/%3E%3Cellipse cx='11' cy='16' rx='4.2' ry='3' fill='none' stroke='%23f6f4ef' stroke-width='1.6'/%3E%3Cellipse cx='21' cy='16' rx='4.2' ry='3' fill='%23f6f4ef'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;display=swap">
+  <title>토익 점수 추정기</title>
+  <style>
+    :root {
+      --paper: #f6f4ef;
+      --surface: #fbfaf7;
+      --ink: #161616;
+      --ink-2: #3b3a37;
+      --muted: #6f6c66;
+      --faint: #a8a49c;
+      --line: #dcd8cf;
+      --line-soft: #e8e5de;
+      --sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+      --serif: "Instrument Serif", "Times New Roman", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; background: var(--paper); color: var(--ink);
+      font: 400 16px/1.6 var(--sans); letter-spacing: -0.01em;
+      word-break: keep-all; overflow-wrap: break-word;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input { font: inherit; letter-spacing: inherit; }
+    button, summary { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button { color: inherit; }
+    :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+    button:disabled { cursor: default; }
+    h1, h2, h3, p, dl, dd, fieldset { margin: 0; }
+
+    .page { width: min(920px, calc(100% - 32px)); margin: 0 auto; padding: max(28px, env(safe-area-inset-top)) 0 max(40px, env(safe-area-inset-bottom)); }
+
+    /* masthead */
+    .masthead { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--ink); }
+    .context { font: 500 11px/1.4 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    h1 { font-size: clamp(30px, 7.4vw, 48px); line-height: 1.15; letter-spacing: -.045em; font-weight: 750; }
+    .marks { display: grid; grid-template-columns: repeat(4, 13px); gap: 7px 6px; padding: 0 1px 6px; flex: none; }
+    .marks i { height: 8px; border: 1px solid var(--faint); border-radius: 100%; }
+    .marks i:nth-child(2), .marks i:nth-child(7), .marks i:nth-child(9) { background: var(--ink); border-color: var(--ink); }
+
+    /* layout */
+    .workspace { display: grid; grid-template-columns: 1fr; gap: 0; margin: 22px 0 28px; }
+    .entry, .result { min-width: 0; }
+    .result { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 18px; }
+    @media (min-width: 760px) {
+      .page { padding-top: clamp(48px, 9vh, 88px); }
+      .workspace { grid-template-columns: 1fr 1fr; margin: 32px 0 36px; }
+      .entry { padding-right: 44px; }
+      .result { border-top: 0; margin-top: 0; padding-top: 0; padding-left: 44px; border-left: 1px solid var(--line); }
+    }
+
+    .toolbar, .result-head, .entry-foot, .sheet-head, .sheet-foot, .group-head, .part-line { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    h2 { font-size: 15px; font-weight: 650; letter-spacing: -.02em; line-height: 1.4; }
+    .eyebrow { font: 500 13px/1.4 var(--sans); letter-spacing: 0; color: var(--muted); }
+
+    .outline, .primary { border-radius: 999px; min-height: 40px; padding: 7px 16px; font-size: 14px; font-weight: 600; border: 1px solid var(--ink); }
+    .outline { background: transparent; color: var(--ink); }
+    .outline:hover { background: var(--ink); color: var(--paper); }
+    .chev { display: inline-block; width: 6px; height: 6px; border: solid currentColor; border-width: 1.4px 1.4px 0 0; transform: rotate(45deg); vertical-align: .12em; margin-left: 6px; }
+    .primary { color: var(--paper); background: var(--ink); padding-inline: 22px; }
+    .primary:hover { background: #000; }
+
+    /* inputs */
+    .inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+    .input-cell { min-width: 0; }
+    .section-label { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+    .section-label small { font-size: 12px; font-weight: 400; color: var(--muted); }
+    .number-box { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; background: var(--surface); transition: border-color .15s; }
+    .number-box:focus-within { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+    .number-box.invalid { border-color: var(--ink); border-style: dashed; }
+    .number-box input {
+      width: 100%; min-width: 0; min-height: 58px; padding: 4px 0; border: 0; border-radius: 0;
+      outline: none; background: transparent; color: var(--ink);
+      font: 600 26px/1.2 var(--sans); letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+    }
+    .number-box input::placeholder { color: var(--faint); opacity: 1; font-weight: 400; font-size: 17px; }
+    .unit { font-size: 14px; color: var(--muted); }
+    .error { display: block; font-size: 12px; font-weight: 600; color: var(--ink); margin-top: 6px; }
+    .error::before { content: "— "; }
+    .error:empty { display: none; }
+    .entry-foot { margin-top: 12px; align-items: baseline; }
+    .hint, .status { font-size: 13px; color: var(--muted); }
+    .flat { border: none; background: none; padding: 8px 0; min-height: 40px; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--faint); flex-shrink: 0; }
+    .flat:hover { text-decoration-color: var(--ink); }
+    .flat:disabled { color: var(--faint); text-decoration: none; }
+
+    /* result */
+    .result-head { min-height: 40px; }
+    .result-note { font-size: 12px; color: var(--muted); }
+    .total-line { margin-top: 2px; display: flex; align-items: baseline; gap: 10px; }
+    .score { font: 400 clamp(88px, 26vw, 120px)/.95 var(--serif); letter-spacing: -.03em; font-variant-numeric: lining-nums tabular-nums; }
+    .score.empty { color: var(--faint); }
+    .out-of { font: italic 400 24px/1 var(--serif); color: var(--muted); }
+    .range { color: var(--muted); font-size: 14px; margin: 10px 0 0; min-height: 22px; }
+    .range strong { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+
+    .scale { position: relative; height: 26px; margin: 14px 0 4px; }
+    .scale .track { position: absolute; left: 0; right: 0; top: 12px; height: 1px; background: var(--line); }
+    .scale .ticks { position: absolute; inset: 9px 0 auto; height: 7px; display: flex; justify-content: space-between; }
+    .scale .ticks i { width: 1px; height: 7px; background: var(--line); }
+    .scale .span { position: absolute; top: 10px; height: 5px; background: var(--ink); border-radius: 3px; opacity: .22; }
+    .scale .dot { position: absolute; top: 6px; width: 13px; height: 13px; margin-left: -6.5px; border-radius: 50%; background: var(--ink); border: 2px solid var(--paper); }
+    .scale-labels { display: flex; justify-content: space-between; font: 400 11px/1 var(--sans); color: var(--faint); font-variant-numeric: tabular-nums; }
+
+    .subscores { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); margin-top: 18px; }
+    .subscores > div { padding-top: 12px; }
+    .subscores > div + div { padding-left: 18px; border-left: 1px solid var(--line); }
+    .subscores dt { font-size: 13px; color: var(--muted); }
+    .subscores dd { font: 400 40px/1.05 var(--serif); font-variant-numeric: lining-nums tabular-nums; margin-top: 2px; }
+    .subscores dd small { font: 400 13px var(--sans); color: var(--muted); margin-left: 3px; }
+    .disclaimer { margin-top: 18px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; line-height: 1.6; color: var(--ink-2); background: var(--surface); }
+
+    /* method */
+    details { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
+    summary { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; list-style: none; font-weight: 600; font-size: 14px; }
+    summary::-webkit-details-marker { display: none; }
+    summary .chev { transform: rotate(135deg); margin-right: 6px; transition: transform .2s; }
+    details[open] summary .chev { transform: rotate(-45deg); }
+    .method { max-width: 68ch; font-size: 14px; color: var(--ink-2); padding: 0 0 18px; line-height: 1.75; }
+    .method p + p { margin-top: 10px; }
+    .method .label { display: block; font-size: 12px; letter-spacing: 0; color: var(--muted); margin-bottom: 2px; }
+    .sources { display: flex; flex-wrap: wrap; column-gap: 16px; row-gap: 2px; }
+    a { color: var(--ink); text-decoration-color: var(--faint); text-underline-offset: 3px; }
+    a:hover { text-decoration-color: var(--ink); }
+    .foot { margin-top: 18px; font-size: 12px; color: var(--muted); }
+
+    /* parts sheet */
+    .sheet {
+      color: var(--ink); width: min(520px, calc(100% - 24px)); max-height: 90vh; max-height: 90dvh;
+      margin: auto; padding: 0; border: 1px solid var(--line); border-radius: 16px; background: var(--surface);
+      box-shadow: 0 24px 70px rgba(22, 22, 22, .18);
+    }
+    .sheet::backdrop { background: rgba(22, 22, 22, .32); }
+    .sheet[open], .sheet-form { display: flex; flex-direction: column; overflow: hidden; }
+    .sheet-form { min-height: 0; }
+    body:has(.sheet[open]) { overflow: hidden; }
+    .sheet-head { padding: 12px 20px; border-bottom: 1px solid var(--line); }
+    #parts-title:focus { outline: none; }
+    .close { min-width: 42px; min-height: 42px; padding: 0; border: 0; border-radius: 50%; background: transparent; font: 300 26px/1 var(--sans); }
+    .close:hover { background: var(--line-soft); }
+    .sheet-content { padding: 12px 20px 16px; overflow-y: auto; overscroll-behavior: contain; }
+    fieldset { min-width: 0; border: 0; padding: 0; }
+    .part-group { margin-top: 16px; }
+    .group-head { border-bottom: 1px solid var(--ink); padding-bottom: 6px; }
+    .group-head h3 { font-size: 14px; font-weight: 650; }
+    .part-row { padding: 5px 0; border-bottom: 1px solid var(--line-soft); }
+    .part-name { display: inline-flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; font-size: 14px; }
+    .part-name b { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .part-name small { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .part-line .number-box { width: 84px; flex: 0 0 84px; border-radius: 9px; padding: 0 10px; }
+    .part-line input { min-height: 42px; font-size: 18px; }
+    .part-row .error { text-align: right; }
+    .sheet-foot { padding: 12px 20px max(12px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); gap: 14px; }
+    .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    noscript { display: block; margin-top: 16px; }
+
+    @media (max-width: 759px) {
+      .sheet { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 18px 18px 0 0; border-bottom: 0; max-height: 88dvh; }
+    }
+    @media (max-width: 360px) {
+      .marks { display: none; }
+      .inputs { gap: 10px; }
+      .number-box { padding: 0 10px; }
+      .sheet-head, .sheet-content, .sheet-foot { padding-inline: 14px; }
+      .part-name { column-gap: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    @media print {
+      body { background: #fff; }
+      button, dialog, details, .entry-foot, .foot { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <div><p class="context">TOEIC Listening &amp; Reading</p><h1>토익 점수 추정기</h1></div>
+      <div class="marks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </header>
+    <noscript>계산하려면 자바스크립트를 켠 브라우저에서 열어 주세요.</noscript>
+    <div class="workspace">
+      <section class="entry" aria-labelledby="entry-title">
+        <div class="toolbar">
+          <h2 id="entry-title">틀린 문제 수</h2>
+          <button id="open-parts" class="outline" type="button" aria-haspopup="dialog" aria-controls="parts-dialog">파트별로 입력<i class="chev" aria-hidden="true"></i></button>
+        </div>
+        <div class="inputs">
+          <div class="input-cell lc">
+            <label class="section-label" for="lc">리스닝 <small>틀린 개수</small></label>
+            <div class="number-box"><input id="lc" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="next" placeholder="예) 5" aria-describedby="entry-hint lc-error"><span class="unit" aria-hidden="true">개</span></div>
+            <span class="error" id="lc-error"></span>
+          </div>
+          <div class="input-cell rc">
+            <label class="section-label" for="rc">리딩 <small>틀린 개수</small></label>
+            <div class="number-box"><input id="rc" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="done" placeholder="예) 5" aria-describedby="entry-hint rc-error"><span class="unit" aria-hidden="true">개</span></div>
+            <span class="error" id="rc-error"></span>
+          </div>
+        </div>
+        <div class="entry-foot">
+          <p class="hint" id="entry-hint">하나도 틀리지 않았다면 0을 입력하세요.</p>
+          <button class="flat" type="button" id="clear" disabled>다시 입력</button>
+        </div>
+      </section>
+      <section class="result" aria-labelledby="result-title" tabindex="-1" id="result">
+        <div class="result-head"><h2 id="result-title" class="eyebrow">예상 총점</h2><span class="result-note">보통 난이도 기준</span></div>
+        <div class="total-line"><span class="score empty" id="total-score">—</span><span class="out-of">/ 990</span></div>
+        <p id="range" class="range">리스닝과 리딩에서 각각 몇 개 틀렸는지 입력하세요.</p>
+        <div class="scale" aria-hidden="true">
+          <div class="track"></div>
+          <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="span" id="scale-span" hidden></div>
+          <div class="dot" id="scale-dot" hidden></div>
+        </div>
+        <div class="scale-labels" aria-hidden="true"><span>10</span><span>990</span></div>
+        <dl class="subscores">
+          <div><dt>리스닝</dt><dd id="lc-score">—</dd></div>
+          <div><dt>리딩</dt><dd id="rc-score">—</dd></div>
+        </dl>
+        <p class="disclaimer">추정치예요 — 회차마다 환산표가 달라 실제 점수와 다를 수 있어요.</p>
+      </section>
+    </div>
+    <p class="sr" id="announcement" role="status" aria-live="polite" aria-atomic="true"></p>
+    <details>
+      <summary>점수는 어떻게 계산하나요? <i class="chev" aria-hidden="true"></i></summary>
+      <div class="method">
+        <p>Part 1~4에서 틀린 개수를 더해 리스닝 점수를, Part 5~7에서 틀린 개수를 더해 리딩 점수를 추정해요. 두 점수를 더하면 예상 총점이 나와요.</p>
+        <p>해커스 환산기의 난이도별 값을 기준점으로 쓰고, 사이 값은 직선으로 이어 5점 단위로 반올림해요. 영역별 범위는 5~495점이에요. 예상 총점은 보통 난이도, 예상 범위는 쉬운 시험과 어려운 시험을 가정한 값이에요.</p>
+        <p>공개된 환산표 여러 개와 100가지 경우를 맞춰 봤을 때, 리딩을 25~50개 틀린 구간이 다른 표들보다 5~15점 낮게 나와서 그 구간만 가운데 쪽으로 올렸어요. 같은 개수를 틀려도 리스닝이 리딩보다 점수가 조금 후한 편이에요.</p>
+        <p>ETS는 시험지마다 난이도를 따로 보정하고, 정기시험 환산표는 공개하지 않아요. 그래서 실제 점수는 표시된 범위를 벗어날 수 있어요.</p>
+        <p><span class="label">기준</span><span class="sources">
+          <a href="https://www.hackers.co.kr/s_toeic/score_change/main?mode=score1&amp;open=1" target="_blank" rel="noopener noreferrer">해커스 환산기</a>
+          <a href="https://www.kr.ets.org/pdfs/toeic/toeic-listening-reading-test-examinee-handbook.pdf" target="_blank" rel="noopener noreferrer">ETS 수험자 안내서</a>
+          <a href="https://exam.toeic.co.kr/common/template/viewContents.php?contentsCode=37" target="_blank" rel="noopener noreferrer">한국TOEIC위원회 규정</a>
+        </span></p>
+        <p><span class="label">비교한 환산표</span><span class="sources">
+          <a href="https://www.oxfordenglishtesting.com/oaslms/resources/toeic_score_conversion_chart.pdf" target="_blank" rel="noopener noreferrer">Oxford 연습시험 환산표</a>
+          <a href="https://lumetest.com/blog/toeic/toeic-score-chart-conversion" target="_blank" rel="noopener noreferrer">Lumetest</a>
+          <a href="https://community.linkareer.com/employment_data/4104106" target="_blank" rel="noopener noreferrer">링커리어</a>
+          <a href="https://tools.devcomma.com/calculators/toeic-score" target="_blank" rel="noopener noreferrer">데브콤마</a>
+          <a href="https://testgaza.com/toeic-point/" target="_blank" rel="noopener noreferrer">테스트가자</a>
+          <a href="https://xjin.kr/395" target="_blank" rel="noopener noreferrer">엑스진 환산표 모음</a>
+        </span></p>
+      </div>
+    </details>
+    <p class="foot">서버 없이 이 페이지 안에서만 계산해요. 입력한 숫자는 어디에도 저장되거나 보내지지 않아요.</p>
+  </main>
+  <dialog class="sheet" id="parts-dialog" aria-labelledby="parts-title" aria-describedby="parts-hint">
+    <div class="sheet-head">
+      <h2 id="parts-title" tabindex="-1" autofocus>파트별 틀린 개수</h2>
+      <button id="close-parts" class="close" type="button" aria-label="파트별 입력 닫기">×</button>
+    </div>
+    <form class="sheet-form" id="parts-form" novalidate>
+      <div class="sheet-content">
+        <p class="hint" id="parts-hint">각 파트에서 틀린 개수를 입력하세요. 예를 들어 Part 1의 6문제 중 2개를 틀렸다면 2를 넣으세요.</p>
+        <fieldset class="part-group" aria-labelledby="part-lc-label">
+          <div class="group-head"><h3 id="part-lc-label">리스닝</h3><span class="status" id="part-lc-count"></span></div>
+          <div id="lc-rows"></div>
+        </fieldset>
+        <fieldset class="part-group" aria-labelledby="part-rc-label">
+          <div class="group-head"><h3 id="part-rc-label">리딩</h3><span class="status" id="part-rc-count"></span></div>
+          <div id="rc-rows"></div>
+        </fieldset>
+        <p class="error" id="part-error" role="status"></p>
+      </div>
+      <div class="sheet-foot">
+        <button id="fill-zeros" type="button" class="flat">빈칸에 0 넣기</button>
+        <button type="submit" class="primary">틀린 개수로 환산</button>
+      </div>
+    </form>
+  </dialog>
+  <script>
+    "use strict";
+    const byId = (id) => document.getElementById(id);
+    const sections = ["lc", "rc"];
+    // Anchors are [wrong, easy, typical, hard]. Interpolate each section independently.
+    // Base: Hackers converter by difficulty. Reading 27~50 wrong was raised 10~15 points
+    // toward the consensus of published conversion tables (see tests.csv in the repo).
+    const anchors = {
+      lc: [
+        [0,495,495,495], [1,490,490,495], [2,480,485,495], [3,470,485,495],
+        [4,465,480,490], [5,465,480,490], [8,450,465,475], [10,440,455,465],
+        [12,430,445,455], [15,415,430,440], [17,400,415,425], [20,380,395,405],
+        [25,350,365,375], [30,320,335,345], [33,305,320,330], [40,270,285,295],
+        [50,220,235,245], [60,165,180,185], [70,110,125,135], [80,75,90,100],
+        [90,25,40,50], [100,5,5,5]
+      ],
+      rc: [
+        [0,495,495,495], [1,485,490,495], [2,475,485,490], [3,465,475,485],
+        [4,455,470,480], [5,445,460,470], [7,435,450,460], [9,420,435,445],
+        [10,410,425,435], [15,380,395,405], [20,355,370,380], [23,340,355,365],
+        [25,320,335,345], [27,315,330,340], [30,295,310,320], [35,270,285,295],
+        [38,255,270,280], [40,240,255,265], [45,205,220,230], [50,185,200,210],
+        [55,150,165,175], [60,125,140,150], [70,80,95,105], [80,30,45,55],
+        [90,10,15,15], [100,5,5,5]
+      ]
+    };
+    const parts = [
+      {id: 1, section: "lc", name: "사진 묘사", max: 6},
+      {id: 2, section: "lc", name: "질의응답", max: 25},
+      {id: 3, section: "lc", name: "짧은 대화", max: 39},
+      {id: 4, section: "lc", name: "짧은 담화", max: 30},
+      {id: 5, section: "rc", name: "단문 빈칸", max: 30},
+      {id: 6, section: "rc", name: "장문 빈칸", max: 16},
+      {id: 7, section: "rc", name: "독해", max: 54}
+    ];
+    const dialog = byId("parts-dialog");
+    const entryHint = byId("entry-hint");
+    const emptyHint = entryHint.textContent;
+    let submittedParts = false;
+
+    function estimate(section, wrong) {
+      const points = anchors[section];
+      const index = points.findIndex((point) => wrong <= point[0]);
+      const upper = points[index];
+      if (wrong === upper[0]) return upper.slice(1);
+      const lower = points[index - 1];
+      const fraction = (wrong - lower[0]) / (upper[0] - lower[0]);
+      return [1, 2, 3].map((column) => {
+        const score = lower[column] + fraction * (upper[column] - lower[column]);
+        return Math.round(score / 5) * 5;
+      });
+    }
+
+    function readCount(field, maximum, required = false) {
+      const raw = field.value.normalize("NFKC").trim();
+      let error = "";
+      let value = null;
+      if (raw === "") {
+        if (required) error = "틀린 개수를 입력하세요.";
+      } else if (!/^[0-9]+$/.test(raw) || Number(raw) > maximum) {
+        error = "0~" + maximum + " 사이의 정수를 입력하세요.";
+      } else {
+        value = Number(raw);
+      }
+      field.setAttribute("aria-invalid", String(Boolean(error)));
+      field.parentElement.classList.toggle("invalid", Boolean(error));
+      byId(field.id + "-error").textContent = error;
+      return value;
+    }
+
+    function placeScale(low, total, high) {
+      const span = byId("scale-span");
+      const dot = byId("scale-dot");
+      const pos = (score) => ((score - 10) / 980 * 100).toFixed(2) + "%";
+      if (low === null) { span.hidden = true; dot.hidden = true; return; }
+      span.hidden = false; dot.hidden = false;
+      span.style.left = pos(low);
+      span.style.width = ((high - low) / 980 * 100).toFixed(2) + "%";
+      dot.style.left = pos(total);
+    }
+
+    function renderScores() {
+      const wrongCounts = sections.map((section) => readCount(byId(section), 100));
+      const values = sections.map((section, index) => {
+        const wrong = wrongCounts[index];
+        const band = wrong === null ? null : estimate(section, wrong);
+        const cell = byId(section + "-score");
+        if (band) { cell.textContent = band[1]; const unit = document.createElement("small"); unit.textContent = "점"; cell.append(unit); }
+        else cell.textContent = "—";
+        return band;
+      });
+      const [lc, rc] = values;
+      const range = byId("range");
+      const live = byId("announcement");
+      const totalCell = byId("total-score");
+      byId("clear").disabled = !sections.some((section) => byId(section).value !== "") &&
+        !parts.some((part) => byId("p" + part.id).value !== "");
+      if (!lc || !rc) {
+        totalCell.textContent = "—";
+        totalCell.classList.add("empty");
+        placeScale(null);
+        entryHint.textContent = emptyHint;
+        const invalid = sections.some((section) => byId(section).getAttribute("aria-invalid") === "true");
+        if (invalid) range.textContent = "틀린 개수를 0~100 사이로 입력하세요.";
+        else if (lc) range.textContent = "리딩에서 틀린 개수를 입력하면 총점이 나와요.";
+        else if (rc) range.textContent = "리스닝에서 틀린 개수를 입력하면 총점이 나와요.";
+        else range.textContent = "리스닝과 리딩에서 각각 몇 개 틀렸는지 입력하세요.";
+        live.textContent = range.textContent;
+        return;
+      }
+      const [lcWrong, rcWrong] = wrongCounts;
+      entryHint.textContent = "리스닝 " + lcWrong + "개 + 리딩 " + rcWrong + "개 = 총 " + (lcWrong + rcWrong) + "개 틀림";
+      const total = lc[1] + rc[1];
+      const low = lc[0] + rc[0];
+      const high = lc[2] + rc[2];
+      const bandText = low === high ? low + "점" : low + "~" + high + "점";
+      totalCell.textContent = total;
+      totalCell.classList.remove("empty");
+      placeScale(low, total, high);
+      const bandLabel = document.createElement("strong");
+      bandLabel.textContent = bandText;
+      range.replaceChildren("난이도별 예상 범위 ", bandLabel);
+      live.textContent = "예상 총점 " + total + "점. 리스닝 " + lc[1] + "점, 리딩 " + rc[1] + "점. 예상 범위 " + bandText + ".";
+    }
+
+    function buildPartRows() {
+      for (const part of parts) {
+        const row = document.createElement("div");
+        row.className = "part-row";
+        const key = "p" + part.id;
+        row.innerHTML = '<div class="part-line"><label class="part-name" for="' + key + '"><b>Part ' + part.id +
+          '</b><span>' + part.name + '</span><small>' + part.max + '문항</small><span class="sr"> 틀린 개수</span></label>' +
+          '<div class="number-box"><input id="' + key + '" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" ' +
+          'placeholder="—" aria-describedby="' + key + '-error"><span class="unit" aria-hidden="true">개</span></div></div>' +
+          '<span class="error" id="' + key + '-error"></span>';
+        byId(part.section + "-rows").append(row);
+      }
+    }
+
+    function partTotals(required = false) {
+      let firstMissing = null;
+      const totals = {};
+      for (const section of sections) {
+        const group = parts.filter((part) => part.section === section);
+        let entered = 0;
+        let total = 0;
+        for (const part of group) {
+          const field = byId("p" + part.id);
+          const value = readCount(field, part.max, required);
+          if (value === null) {
+            if (!firstMissing) firstMissing = field;
+          } else {
+            entered++;
+            total += value;
+          }
+        }
+        totals[section] = total;
+        byId("part-" + section + "-count").textContent = entered === group.length
+          ? "총 " + total + "개 틀림"
+          : entered + " / " + group.length + "개 파트 입력";
+      }
+      byId("part-error").textContent = firstMissing && required ? "표시된 파트를 확인한 뒤 다시 눌러 주세요." : "";
+      return {totals, firstMissing};
+    }
+
+    buildPartRows();
+    for (const section of sections) byId(section).addEventListener("input", renderScores);
+    byId("lc").addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.isComposing) { event.preventDefault(); byId("rc").focus(); }
+    });
+    byId("rc").addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.isComposing) { event.preventDefault(); byId("rc").blur(); }
+    });
+    byId("open-parts").addEventListener("click", () => {
+      submittedParts = false;
+      partTotals();
+      dialog.showModal();
+    });
+    byId("close-parts").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
+    dialog.addEventListener("close", renderScores);
+    byId("parts-form").addEventListener("input", () => partTotals(submittedParts));
+    byId("fill-zeros").addEventListener("click", () => {
+      for (const part of parts) {
+        const field = byId("p" + part.id);
+        if (field.value.trim() === "") field.value = "0";
+      }
+      partTotals(submittedParts);
+    });
+    byId("parts-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      submittedParts = true;
+      const {totals, firstMissing} = partTotals(true);
+      if (firstMissing) { firstMissing.focus(); return; }
+      for (const section of sections) byId(section).value = totals[section];
+      dialog.close();
+      renderScores();
+      byId("result").focus();
+    });
+    byId("clear").addEventListener("click", () => {
+      for (const section of sections) byId(section).value = "";
+      for (const part of parts) byId("p" + part.id).value = "";
+      submittedParts = false;
+      partTotals();
+      renderScores();
+      byId("lc").focus();
+    });
+    renderScores();
+  </script>
+</body>
+</html>
