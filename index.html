@@ -123,6 +123,7 @@
     .subscores dt { font-size: 13px; color: var(--muted); }
     .subscores dd { font: 400 40px/1.05 var(--serif); font-variant-numeric: lining-nums tabular-nums; margin-top: 2px; }
     .subscores dd small { font: 400 13px var(--sans); color: var(--muted); margin-left: 3px; }
+    .checked { margin-top: 8px; font-size: 12px; color: var(--muted); }
     .disclaimer { margin-top: 18px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; line-height: 1.6; color: var(--ink-2); background: var(--surface); }
 
     /* note */
@@ -210,6 +211,7 @@
           <div><dt>리딩</dt><dd id="rc-score">—</dd></div>
         </dl>
         <p class="disclaimer">추정치예요 — 회차마다 환산표가 달라 실제 점수와 다를 수 있어요.</p>
+        <p class="checked">실제 후기 200건과 비교해 평균 오차 약 ±24점</p>
       </section>
     </div>
     <p class="sr" id="announcement" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -230,6 +232,7 @@
         <p>리스닝에서 틀린 개수로 리스닝 점수를, 리딩에서 틀린 개수로 리딩 점수를 추정하고, 두 점수를 더해 예상 총점을 내요.</p>
         <p>해커스 환산기의 난이도별 값을 기준점으로 쓰고, 사이 값은 직선으로 이어 5점 단위로 반올림해요. 영역별 범위는 5~495점이에요. 예상 총점은 보통 난이도, 예상 범위는 쉬운 시험과 어려운 시험을 가정한 값이에요.</p>
         <p>공개된 환산표 여러 개와 100가지 경우를 맞춰 봤을 때, 리딩을 25~50개 틀린 구간이 다른 표들보다 5~15점 낮게 나와서 그 구간만 가운데 쪽으로 올렸어요. 같은 개수를 틀려도 리스닝이 리딩보다 점수가 조금 후한 편이에요.</p>
+        <p>블로그·커뮤니티에 올라온 실제 후기 200건(틀린 개수와 성적표 점수가 같이 적힌 2016년 이후 정기시험)에 넣어 봤을 때, 총점 평균 오차는 약 24점, 실제 점수가 예상 범위 안에 든 경우는 68%였어요. 후기의 틀린 개수는 대부분 본인 가채점이라 실제보다 적게 센 경우가 섞여 있어요.</p>
         <p>ETS는 시험지마다 난이도를 따로 보정하고, 정기시험 환산표는 공개하지 않아요. 그래서 실제 점수는 표시된 범위를 벗어날 수 있어요.</p>
         <p><span class="label">기준</span><span class="sources">
           <a href="https://www.hackers.co.kr/s_toeic/score_change/main?mode=score1&amp;open=1" target="_blank" rel="noopener noreferrer">해커스 환산기</a>
