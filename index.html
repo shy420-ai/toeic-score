@@ -164,6 +164,8 @@
     .clock { margin-top: 22px; border-top: 1px solid var(--ink); padding-top: 16px; }
     .clock label { display: block; font-size: 14px; font-weight: 600; color: var(--ink-2); margin-bottom: 8px; }
     .clock input { height: 50px; min-width: 150px; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: 600 22px/1 var(--sans); font-variant-numeric: tabular-nums; }
+    .clock-field + .clock-field { margin-top: 16px; }
+    .clock-help { margin-top: 6px; font-size: 12px; line-height: 1.6; }
     .clock input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
     .checkpoints { list-style: none; padding: 0; margin: 14px 0 0; }
     .checkpoints li { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; color: var(--ink-2); }
@@ -337,8 +339,15 @@
           <p class="swap">Part 5와 Part 6 시간은 합만 같으면 나눠 쓰는 건 자유예요.<br>예) Part 5가 더 쉬우면 Part 5 +8분 · Part 6 +10분, Part 6이 더 쉬우면 Part 5 +10분 · Part 6 +8분</p>
           <p class="hint split-note">본문의 +30 / +24는 Part 7 안에서 2지문 시작 체크(+30)까지 나눈 거예요.</p>
           <div class="clock">
-            <label for="lc-end">리스닝 끝난 시각을 넣으면 실제 시각으로 바꿔줘요</label>
-            <input id="lc-end" type="time" step="60">
+            <div class="clock-field">
+              <label for="test-start">시험 시작 시각</label>
+              <input id="test-start" type="time" step="60" aria-describedby="start-help">
+              <p class="hint clock-help" id="start-help">집에서 실전 연습할 땐 시작 시각만 넣으면 +45분으로 리스닝 끝 시각을 채워줘요. 시험장에선 리스닝이 실제로 끝난 시각을 넣는 게 정확해요.</p>
+            </div>
+            <div class="clock-field">
+              <label for="lc-end">리스닝 끝난 시각을 넣으면 실제 시각으로 바꿔줘요</label>
+              <input id="lc-end" type="time" step="60">
+            </div>
             <ol class="checkpoints" id="checkpoints" hidden>
               <li><span class="cp-name">Part 7 끝</span><span class="cp-add" id="cp-add-p7"></span><b id="cp-p7">—</b></li>
               <li><span class="cp-name">Part 5 끝</span><span class="cp-add" id="cp-add-p5"></span><b id="cp-p5">—</b></li>
@@ -581,7 +590,7 @@
       try {
         const runs = [];
         for (let i = 0; i < RUN_COUNT; i++) runs.push(["p7", "p5", "p6"].map((key) => byId("run-" + i + "-" + key).value));
-        localStorage.setItem(STORE_KEY, JSON.stringify({runs, start: byId("lc-end").value}));
+        localStorage.setItem(STORE_KEY, JSON.stringify({runs, start: byId("lc-end").value, testStart: byId("test-start").value, lcManual}));
       } catch (error) { /* storage unavailable: keep working without saving */ }
     }
     function loadLimit() {
@@ -592,6 +601,8 @@
           if (typeof values[k] === "string") byId("run-" + i + "-" + key).value = values[k];
         }));
         if (typeof saved.start === "string") byId("lc-end").value = saved.start;
+        if (typeof saved.testStart === "string") byId("test-start").value = saved.testStart;
+        lcManual = saved.lcManual === true;
       } catch (error) { /* ignore broken or blocked storage */ }
     }
     function renderLimit() {
@@ -638,6 +649,13 @@
         list.hidden = false;
       } else list.hidden = true;
     }
+    // 시험 시작 시각 → 리스닝 끝 = +45분, unless the listening-end field was edited by hand
+    let lcManual = false;
+    byId("test-start").addEventListener("input", () => {
+      const start = byId("test-start").value;
+      if (!lcManual && /^\d{2}:\d{2}/.test(start)) byId("lc-end").value = addMinutes(start, 45);
+    });
+    byId("lc-end").addEventListener("input", () => { lcManual = byId("lc-end").value !== ""; });
     buildRuns();
     loadLimit();
     byId("tab-limit").addEventListener("input", () => { renderLimit(); saveLimit(); });
