@@ -104,6 +104,10 @@
     .out-of { font: italic 400 24px/1 var(--serif); color: var(--muted); }
     .range { color: var(--muted); font-size: 14px; margin: 10px 0 0; min-height: 22px; }
     .range strong { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+    .rank { margin-top: 6px; font-size: 15px; color: var(--ink-2); }
+    .rank strong { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .rank-src { margin-top: 2px; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+    .tag { display: inline-block; margin-right: 5px; padding: 0 5px; border: 1px solid var(--faint); border-radius: 4px; font-size: 10.5px; line-height: 15px; color: var(--muted); vertical-align: 1px; }
 
     .scale { position: relative; height: 26px; margin: 14px 0 4px; }
     .scale .track { position: absolute; left: 0; right: 0; top: 12px; height: 1px; background: var(--line); }
@@ -190,6 +194,10 @@
         <div class="result-head"><h2 id="result-title" class="eyebrow">예상 총점</h2><span class="result-note">보통 난이도 기준</span></div>
         <div class="total-line"><span class="score empty" id="total-score">—</span><span class="out-of">/ 990</span></div>
         <p id="range" class="range">리스닝과 리딩에서 각각 몇 개 틀렸는지 입력하세요.</p>
+        <div id="rank-wrap" hidden>
+          <p class="rank" id="rank"></p>
+          <p class="rank-src"><span class="tag">추정</span>2025년 1~12월 국내 토익 정기시험 점수대 분포(한국토익위원회, 2026년 3월 발표) 기준 · 100점 구간 안은 고르게 나눠 계산</p>
+        </div>
         <div class="scale" aria-hidden="true">
           <div class="track"></div>
           <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -227,6 +235,11 @@
           <a href="https://www.hackers.co.kr/s_toeic/score_change/main?mode=score1&amp;open=1" target="_blank" rel="noopener noreferrer">해커스 환산기</a>
           <a href="https://www.kr.ets.org/pdfs/toeic/toeic-listening-reading-test-examinee-handbook.pdf" target="_blank" rel="noopener noreferrer">ETS 수험자 안내서</a>
           <a href="https://exam.toeic.co.kr/common/template/viewContents.php?contentsCode=37" target="_blank" rel="noopener noreferrer">한국TOEIC위원회 규정</a>
+        </span></p>
+        <p>상위 %는 한국토익위원회가 발표한 2025년 국내 정기시험 점수대 분포(905~990점 10.3%, 805~900점 18.7%, 705~800점 21.1%, 605~700점 19.5%, 505~600점 14.4%)로 계산해요. 100점 구간 안은 고르게 퍼져 있다고 보고 나눈 값이라, 900점대 위쪽은 실제보다 조금 넉넉하게 나올 수 있어요.</p>
+        <p><span class="label">상위 % 자료</span><span class="sources">
+          <a href="https://news.ikbc.co.kr/article/view/kbc202603060030" target="_blank" rel="noopener noreferrer">2025년 점수대 분포 (kbc 보도)</a>
+          <a href="https://www.toeicstory.co.kr/2556" target="_blank" rel="noopener noreferrer">토익스토리 2025년 성적 분석</a>
         </span></p>
         <p><span class="label">비교한 환산표</span><span class="sources">
           <a href="https://www.oxfordenglishtesting.com/oaslms/resources/toeic_score_conversion_chart.pdf" target="_blank" rel="noopener noreferrer">Oxford 연습시험 환산표</a>
@@ -299,6 +312,27 @@
       return value;
     }
 
+    // Share of Korean TOEIC regular-test takers at or above each band's lower bound
+    // (2025 Jan-Dec, 한국토익위원회 announced 2026-03): 905+ 10.3%, 805+ 29.0%, 705+ 50.1%,
+    // 605+ 69.6%, 505+ 84.0%. Boundaries sit between 5-point steps (e.g. 902.5).
+    const topShareTable = [[992.5, 0], [902.5, 10.3], [802.5, 29.0], [702.5, 50.1], [602.5, 69.6], [502.5, 84.0]];
+    function topShare(total) {
+      const x = total - 2.5;
+      if (x < 502.5) return null;
+      for (let i = 1; i < topShareTable.length; i++) {
+        const [hiEdge, hiShare] = topShareTable[i - 1];
+        const [loEdge, loShare] = topShareTable[i];
+        if (x >= loEdge) return loShare + (hiShare - loShare) * (x - loEdge) / (hiEdge - loEdge);
+      }
+      return null;
+    }
+    function rankText(total) {
+      const share = topShare(total);
+      if (share === null) return {lead: "한국 응시자 중 ", strong: "하위 16% 구간", tail: " (505점 미만)"};
+      if (share < 1) return {lead: "한국 응시자 중 ", strong: "상위 1% 안쪽", tail: ""};
+      return {lead: "한국 응시자 중 ", strong: "상위 약 " + Math.round(share) + "%", tail: ""};
+    }
+
     function placeScale(low, total, high) {
       const span = byId("scale-span");
       const dot = byId("scale-dot");
@@ -335,6 +369,7 @@
         else if (lc) range.textContent = "리딩에서 틀린 개수를 입력하면 총점이 나와요.";
         else if (rc) range.textContent = "리스닝에서 틀린 개수를 입력하면 총점이 나와요.";
         else range.textContent = "리스닝과 리딩에서 각각 몇 개 틀렸는지 입력하세요.";
+        byId("rank-wrap").hidden = true;
         live.textContent = range.textContent;
         return;
       }
@@ -350,7 +385,12 @@
       const bandLabel = document.createElement("strong");
       bandLabel.textContent = bandText;
       range.replaceChildren("난이도별 예상 범위 ", bandLabel);
-      live.textContent = "예상 총점 " + total + "점. 리스닝 " + lc[1] + "점, 리딩 " + rc[1] + "점. 예상 범위 " + bandText + ".";
+      const rank = rankText(total);
+      const rankStrong = document.createElement("strong");
+      rankStrong.textContent = rank.strong;
+      byId("rank").replaceChildren(rank.lead, rankStrong, rank.tail);
+      byId("rank-wrap").hidden = false;
+      live.textContent = "예상 총점 " + total + "점. 리스닝 " + lc[1] + "점, 리딩 " + rc[1] + "점. 예상 범위 " + bandText + ". 한국 응시자 중 " + rank.strong + " 추정.";
     }
 
     for (const section of sections) byId(section).addEventListener("input", renderScores);
